@@ -18,7 +18,7 @@ your-project/
 
 ## Reading the rules
 
-Each of the ten principles contains individual **MUST** and **SHOULD** requirements, illustrated with practical Python examples.
+Each of the ten principles contains individual **MUST** and **SHOULD** requirements, illustrated with practical Python examples. Each sub-rule reproduces its corresponding `AGENTS.md` clause verbatim for one-to-one traceability.
 
 | Section | Purpose |
 |---|---|
@@ -38,12 +38,12 @@ Examples are intentionally simplified to isolate individual engineering principl
 ## The Ten Rules
 
 1. **Use simple, explicit control flow**
-2. **Represent money and blockchain quantities exactly**
-3. **Write small, typed, documented functions**
-4. **Validate every trust boundary**
-5. **State and enforce invariants**
+2. **Bound every operation**
+3. **Make quantities and resources explicit**
+4. **Keep functions small and responsibilities narrow**
+5. **State and check invariants**
 6. **Minimize mutable state and authority**
-7. **Handle failures explicitly and fail closed**
+7. **Validate inputs and handle every outcome**
 8. **Keep critical behavior inspectable**
 9. **Design for replay, concurrency, and recovery**
 10. **Verify continuously and report evidence**
@@ -53,6 +53,8 @@ Examples are intentionally simplified to isolate individual engineering principl
 ## 1. Use simple, explicit control flow
 
 ### 1.1 MUST — Make transitions and side effects visible
+
+> **AGENTS.md requirement:** Make state transitions and side effects visible. Reject invalid transitions rather than relying on implicit behavior.
 
 **Violation**
 
@@ -78,6 +80,8 @@ credit_account(tx)
 **Trade-offs:** Extra branches and validation add a little code and CPU work; for transfers, that cost is negligible compared with the risk of an invalid transition.
 
 ### 1.2 SHOULD — Prefer explicit branches over clever indirection
+
+> **AGENTS.md requirement:** Prefer straightforward branches and iteration; avoid recursion, metaprogramming, dynamic dispatch, and hidden I/O where explicit code is clearer.
 
 **Violation**
 
@@ -106,6 +110,8 @@ else:
 ## 2. Bound every operation
 
 ### 2.1 MUST — Limit work, retries, and waiting
+
+> **AGENTS.md requirement:** Give loops, retries, queues/batches, network calls, and concurrent work explicit limits (iterations, size, timeout, or cancellation/deadline as appropriate). Never retry or poll indefinitely.
 
 **Violation**
 
@@ -137,6 +143,8 @@ raise RuntimeError("Unreachable")
 
 ### 2.2 MUST — Limit financial exposure and preserve submission uncertainty
 
+> **AGENTS.md requirement:** Bound financial exposure with applicable amount, fee, rate, and velocity limits. A timeout is not evidence that a submitted transaction failed.
+
 **Violation**
 
 ```python
@@ -167,6 +175,8 @@ except TimeoutError:
 
 ### 3.1 MUST — Use exact monetary arithmetic
 
+> **AGENTS.md requirement:** Represent financial quantities using integer atomic units or `Decimal` with specified precision and rounding; never use `float` for money or settlement calculations.
+
 **Violation**
 
 ```python
@@ -189,6 +199,8 @@ fee = (Decimal("0.1") + Decimal("0.2")).quantize(
 **Trade-offs:** `Decimal` and quantization are slower than native floating-point arithmetic; integer atomic units are often faster when the asset scale is known, and either exact approach is preferable for money.
 
 ### 3.2 MUST — Preserve chain, asset, units, decimals, and numeric bounds
+
+> **AGENTS.md requirement:** Carry asset, chain, and unit identifiers across interfaces. Check numeric bounds and token decimals; never assume all tokens have 18 decimals.
 
 **Violation**
 
@@ -215,6 +227,8 @@ send(chain_id=asset.chain_id, asset_id=asset.id,
 **Trade-offs:** Metadata lookups and strict conversions add validation cost and can reject formerly accepted inputs; cache trusted immutable asset metadata where appropriate without bypassing validation.
 
 ### 3.3 SHOULD — Bound memory and in-flight resources
+
+> **AGENTS.md requirement:** Bound memory and resource consumption by limiting collections, payloads, and in-flight tasks rather than materializing unbounded data.
 
 **Violation**
 
@@ -246,6 +260,8 @@ for batch in db.iter_transaction_batches(size=100):
 
 ### 4.1 SHOULD — Give each function one responsibility
 
+> **AGENTS.md requirement:** Keep functions to one responsibility and roughly 60 lines or fewer; break them up when doing so makes reasoning easier.
+
 **Violation**
 
 ```python
@@ -276,6 +292,8 @@ def prepare_withdrawal(request):
 
 ### 4.2 MUST — Document function purpose and non-obvious contracts
 
+> **AGENTS.md requirement:** Give each new or materially modified function a concise docstring describing its purpose; document non-obvious units, side effects, and failure behavior. Comment *why* rather than narrating *what*.
+
 **Violation**
 
 ```python
@@ -301,6 +319,8 @@ def calculate_fee(amount_atomic: int, rate_bps: int) -> int:
 
 ### 5.1 MUST — Define and enforce financial/state invariants
 
+> **AGENTS.md requirement:** Define and enforce relevant invariants: e.g., no negative withdrawable balance, balanced ledger postings, unique nonce allocation, valid state transitions, authorized destinations.
+
 **Violation**
 
 ```python
@@ -325,6 +345,8 @@ balance.available_atomic -= withdrawal.amount_atomic
 
 ### 5.2 MUST — Enforce invariants at runtime; do not rely on `assert`
 
+> **AGENTS.md requirement:** Check invariants with executable validations or tests; fail closed on violations. Never use Python `assert` for production input or financial validation (`-O` can remove it).
+
 **Violation**
 
 ```python
@@ -348,6 +370,8 @@ submit_withdrawal(request)
 
 ### 5.3 SHOULD — Use focused invariant/property tests, not redundant guards
 
+> **AGENTS.md requirement:** Prefer assertions in tests and focused invariant/property-based tests over redundant defensive checks that cannot fail.
+
 **Violation**
 
 ```python
@@ -363,20 +387,26 @@ if amount_atomic != amount_atomic:
 ```python
 from hypothesis import given, strategies as st
 
-@given(st.integers(min_value=0), st.integers(min_value=0))
-def test_ledger_transfer_preserves_total(a, b):
-    before = a + b
-    moved = min(a, 7)
-    assert (a - moved) + (b + moved) == before
+@given(
+    st.integers(min_value=0, max_value=10**12),
+    st.integers(min_value=0, max_value=10**12),
+)
+def test_ledger_transfer_preserves_total(source, destination):
+    ledger = InMemoryLedger(source=source, destination=destination)
+    before = ledger.total_atomic()
+    ledger.transfer_atomic(min(source, 7))
+    assert ledger.total_atomic() == before
 ```
 
-**Why this is safer:** Property tests verify meaningful accounting behavior across many generated inputs.
+**Why this is safer:** Property tests exercise the ledger implementation and check its conservation invariant across many generated balances.
 
 **Trade-offs:** Property-based tests increase test runtime and can require effort to reproduce failures; keep deterministic seeds/examples and distinguish test-only checks from runtime validation.
 
 ## 6. Minimize mutable state and authority
 
 ### 6.1 MUST — Minimize state scope and shared authority
+
+> **AGENTS.md requirement:** Scope mutable state, credentials, and permissions to the narrowest practical component; avoid mutable globals and shared unsynchronized state.
 
 **Violation**
 
@@ -403,6 +433,8 @@ def queue_withdrawal(store, withdrawal):
 **Trade-offs:** Transactions and durable storage add I/O, locking, and operational dependencies compared with a local list; they also enable multi-worker correctness and recovery.
 
 ### 6.2 MUST — Protect secrets; isolate and verify signing
+
+> **AGENTS.md requirement:** Never hardcode, log, commit, or expose private keys or secrets. Separate signing authority from ordinary business logic and verify the transaction intent before signing.
 
 **Violation**
 
@@ -432,6 +464,8 @@ signature = custody_signer.sign_approved_intent(intent)
 
 ### 6.3 SHOULD — Use established signing and custody implementations
 
+> **AGENTS.md requirement:** Use established signing libraries and managed key custody; never devise custom cryptographic primitives.
+
 **Violation**
 
 ```python
@@ -457,6 +491,8 @@ def sign_transaction(approved_intent, custody_signer):
 
 ### 7.1 MUST — Validate data at every trust boundary
 
+> **AGENTS.md requirement:** Validate all trust-boundary inputs (API, RPC, webhook, database imports, configuration, SDK responses), including schema, authorization, chain, asset, amount, and destination.
+
 **Violation**
 
 ```python
@@ -481,6 +517,8 @@ execute_withdrawal(user, asset, destination, payload.amount_atomic)
 **Trade-offs:** Schema and authorization checks add CPU and sometimes lookup latency, especially for remote policy/registry calls; cache only safe, appropriately scoped facts and recheck mutable permissions.
 
 ### 7.2 MUST — Represent failure and uncertainty explicitly
+
+> **AGENTS.md requirement:** Handle failure and uncertainty explicitly; never swallow exceptions or interpret an RPC timeout as a definitive failure. Distinguish rejected, submitted, pending, confirmed, and unknown outcomes where relevant.
 
 **Violation**
 
@@ -511,6 +549,8 @@ return SubmissionResult(status="submitted", tx_hash=tx_hash)
 
 ### 7.3 MUST — Check consequential responses; reject missing critical fields
 
+> **AGENTS.md requirement:** Check consequential return values and external responses; do not silently substitute defaults for critical transaction fields.
+
 **Violation**
 
 ```python
@@ -536,6 +576,8 @@ nonce = validate_nonce(rpc_response["nonce"])
 ## 8. Keep critical behavior inspectable
 
 ### 8.1 MUST — Keep signing and money movement visible
+
+> **AGENTS.md requirement:** Make money movement and signing paths traceable in ordinary code. Do not conceal side effects in decorators, dynamic imports, reflection, monkey-patching, or opaque helpers.
 
 **Violation**
 
@@ -564,6 +606,8 @@ def submit_payout(approved_intent):
 **Trade-offs:** Separating operations may require more calls or explicit orchestration, but makes side effects measurable and easier to isolate in tests.
 
 ### 8.2 MUST — Validate protocol, contract, and signing payload context
+
+> **AGENTS.md requirement:** Use vetted cryptographic and protocol libraries; validate trusted contract/chain configuration and signing payloads (chain/domain, recipient, asset, amount, nonce, fees) before use.
 
 **Violation**
 
@@ -595,6 +639,8 @@ signer.sign_approved_intent(intent)
 **Trade-offs:** Payload validation and policy lookups add CPU and may require RPC or data-store reads; use cached trusted configuration where safe, but validate dynamic chain state at the appropriate point.
 
 ### 8.3 SHOULD — Prefer typed domain objects and few clear abstractions
+
+> **AGENTS.md requirement:** Favor explicit types, typed domain objects, and a small number of clear abstractions over generic dictionaries and clever frameworks.
 
 **Violation**
 
@@ -628,6 +674,8 @@ def send(tx: TransferIntent):
 
 ### 9.1 MUST — Persist idempotency and reconcile uncertain submissions
 
+> **AGENTS.md requirement:** Give externally initiated financial actions durable idempotency protection; enforce uniqueness transactionally, not only in memory. Reconcile uncertain outcomes before resubmitting or compensating.
+
 **Violation**
 
 ```python
@@ -659,6 +707,8 @@ return payment_service.continue_once(operation)
 
 ### 9.2 MUST — Prevent races and persist recoverable state
 
+> **AGENTS.md requirement:** Prevent balance and nonce races using appropriate database transactions, constraints, or locking. Persist intent and state transitions so crashes are recoverable.
+
 **Violation**
 
 ```python
@@ -684,6 +734,8 @@ with db.transaction() as tx:
 **Trade-offs:** Row locks and transactions can cause contention, deadlocks, and lower throughput on hot accounts; keep transactions short, use appropriate isolation, and retry conflicts safely.
 
 ### 9.3 MUST — Handle duplicate events, reorgs, finality, and auditable corrections
+
+> **AGENTS.md requirement:** Handle duplicate/out-of-order events, reorgs, and chain-specific finality before treating settlement as final. Ledger postings must balance and corrections must remain auditable.
 
 **Violation**
 
@@ -714,6 +766,8 @@ else:
 
 ### 10.1 MUST — Run available formatting, type, lint, and test checks
 
+> **AGENTS.md requirement:** Run the project's formatter/linter, type checker, and relevant tests when available; introduce or run strong static checks for financial paths. Do not knowingly leave new warnings or failing checks unexplained.
+
 **Violation**
 
 ```text
@@ -736,6 +790,8 @@ pytest -q
 **Trade-offs:** Linting, typing, and test suites consume developer/CI time and can slow iteration; incremental runs and parallel CI can reduce feedback time without skipping checks.
 
 ### 10.2 MUST — Test adversarial paths without real assets
+
+> **AGENTS.md requirement:** Test safety-critical paths for boundary values, precision, invalid inputs, duplicate requests, races, timeouts after submit, crashes, failed dependencies, and chain reorgs where applicable. Never test with real keys or live funds.
 
 **Violation**
 
@@ -763,6 +819,8 @@ def test_withdrawal_boundaries(fake_ledger, amount):
 **Trade-offs:** Fault-injection and property tests lengthen test suites and require mocks or simulators that may differ from production; balance fast unit tests with realistic integration tests.
 
 ### 10.3 MUST — Report checks actually run and remaining unknowns
+
+> **AGENTS.md requirement:** Report which checks actually ran, what could not be verified, and any unresolved safety deviations. Never claim unrun tests passed.
 
 **Violation**
 
