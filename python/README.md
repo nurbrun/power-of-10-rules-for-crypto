@@ -1,3 +1,55 @@
+# Python — The Power of 10 for Crypto Systems
+
+**Ten engineering principles for writing safer, more predictable, and auditable Python code in cryptocurrency systems.**
+
+This is a Python-specific adaptation of Gerard J. Holzmann's [*The Power of Ten: Rules for Developing Safety-Critical Code*](https://en.wikipedia.org/wiki/The_Power_of_10:_Rules_for_Developing_Safety-Critical_Code), with particular attention to financial precision, transaction integrity, cryptographic operations, and failure recovery.
+
+## Getting started
+
+Copy [`AGENTS.md`](AGENTS.md) into the root of your Python project to provide these instructions to Cursor or another compatible AI coding agent.
+
+```text
+your-project/
+├── AGENTS.md
+├── pyproject.toml
+├── src/
+└── tests/
+```
+
+## Reading the rules
+
+Each of the ten principles contains individual **MUST** and **SHOULD** requirements, illustrated with practical Python examples.
+
+| Section | Purpose |
+|---|---|
+| **Violation** | Code that breaks the requirement |
+| **Risk** | What could go wrong |
+| **Compliance** | Code demonstrating the safer approach |
+| **Why this is safer** | The safety property gained |
+| **Trade-offs** | Performance, complexity, and operational costs |
+
+### Requirement levels
+
+- **MUST** — A blocking requirement that must not be silently bypassed.
+- **SHOULD** — A strong default; deviations require concrete technical justification.
+
+Examples are intentionally simplified to isolate individual engineering principles and should not be treated as complete, production-ready implementations.
+
+## The Ten Rules
+
+1. **Use simple, explicit control flow**
+2. **Represent money and blockchain quantities exactly**
+3. **Write small, typed, documented functions**
+4. **Validate every trust boundary**
+5. **State and enforce invariants**
+6. **Minimize mutable state and authority**
+7. **Handle failures explicitly and fail closed**
+8. **Keep critical behavior inspectable**
+9. **Design for replay, concurrency, and recovery**
+10. **Verify continuously and report evidence**
+
+---
+
 ## 1. Use simple, explicit control flow
 
 ### 1.1 MUST — Make transitions and side effects visible
