@@ -22,7 +22,7 @@ As we delegate more implementation decisions to AI agents, we are also delegatin
 
 This project aims to translate established safety-critical engineering principles into explicit, actionable, and verifiable constraints for AI coding agents. Rather than relying on an agent to independently determine what constitutes acceptable risk, these rules establish expectations around correctness, financial precision, failure handling, and verification.
 
-The goal is not to slow development down or eliminate AI autonomy. It is to make risk easier to identify, reason about, and control so that humans and AI agents can move fast without sacrificing safety.
+The goal is to make risk easier to identify, reason about, and control so that humans and AI agents can move fast without sacrificing safety.
 
 ## Available languages
 
