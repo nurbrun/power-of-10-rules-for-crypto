@@ -12,9 +12,17 @@ This is an independent adaptation, not an official standard or a security guaran
 
 In financial systems, seemingly minor software defects can have irreversible consequences. A rounding error can create incorrect balances, an unsafe retry can duplicate a withdrawal, and an improperly validated transaction can permanently transfer funds to the wrong destination.
 
+The importance of rigorous coding standards extends well beyond cryptocurrency. Following Toyota's unintended acceleration recalls, a NASA investigation of its electronic throttle control software identified at least 243 violations of the original Power of 10 rules. The case demonstrates how numerous seemingly small departures from sound engineering practices can undermine confidence in safety-critical software.
+
 The original Power of 10 demonstrated the value of distilling complex engineering practices into a small number of rules that developers can remember, reviewers can evaluate, and tooling can help enforce.
 
-This project follows that philosophy: **ten principles designed to make critical code easier to understand, reason about, test, and audit.**
+Today, humans and AI agents are increasingly sharing responsibility for writing software. AI can rapidly build functional prototypes by making reasonable assumptions, filling in missing requirements, and choosing implementations without constant human intervention. In non-critical systems, this can be an enormous productivity advantage. In financial systems, those same assumptions can introduce risks that are difficult to detect and expensive—or impossible—to reverse.
+
+As we delegate more implementation decisions to AI agents, we are also delegating more trust. That trust needs clearly defined boundaries.
+
+This project aims to translate established safety-critical engineering principles into explicit, actionable, and verifiable constraints for AI coding agents. Rather than relying on an agent to independently determine what constitutes acceptable risk, these rules establish expectations around correctness, financial precision, failure handling, and verification.
+
+The goal is not to slow development down or eliminate AI autonomy. It is to make risk easier to identify, reason about, and control so that humans and AI agents can move fast without sacrificing safety.
 
 ## Available languages
 
