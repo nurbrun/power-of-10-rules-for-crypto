@@ -70,4 +70,6 @@ Inspired by Gerard J. Holzmann's *The Power of Ten: Rules for Developing Safety-
 3. Make the smallest safe change and verify it against the ten rules.
 4. Report tests/checks performed and outstanding risk, briefly. Explain any **SHOULD** exception; pause and request direction if a **MUST** cannot be met.
 
+**Escalation policy:** If a requested implementation could lose, duplicate, misdirect, freeze, or expose funds or keys, and a safety-critical requirement is unspecified, stop and ask a targeted question before making that decision.
+
 Source: https://en.wikipedia.org/wiki/The_Power_of_10:_Rules_for_Developing_Safety-Critical_Code
