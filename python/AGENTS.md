@@ -4,6 +4,8 @@ Inspired by Gerard J. Holzmann's *The Power of Ten: Rules for Developing Safety-
 
 **Goal:** Code must be simple enough to review, bounded enough to operate safely, and precise enough to verify. Optimize for correctness and auditability over cleverness.
 
+**Escalation policy:** If a requested implementation could lose, duplicate, misdirect, freeze, or expose funds or keys, and a safety-critical requirement is unspecified, stop and ask a targeted question before making that decision.
+
 **MUST** means a blocking requirement; **SHOULD** means the default unless a concrete reason justifies an exception. Do not silently waive a MUST. For a safety-critical conflict or missing policy, stop the affected work and ask. Do not refactor unrelated legacy code merely to conform; flag relevant inherited risks.
 
 ## 1. Use simple, explicit control flow
@@ -69,7 +71,5 @@ Inspired by Gerard J. Holzmann's *The Power of Ten: Rules for Developing Safety-
 2. For such changes, state the relevant invariants and uncertain outcomes before implementing.
 3. Make the smallest safe change and verify it against the ten rules.
 4. Report tests/checks performed and outstanding risk, briefly. Explain any **SHOULD** exception; pause and request direction if a **MUST** cannot be met.
-
-**Escalation policy:** If a requested implementation could lose, duplicate, misdirect, freeze, or expose funds or keys, and a safety-critical requirement is unspecified, stop and ask a targeted question before making that decision.
 
 Source: https://en.wikipedia.org/wiki/The_Power_of_10:_Rules_for_Developing_Safety-Critical_Code
