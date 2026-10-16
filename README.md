@@ -1,6 +1,6 @@
 # The Power of 10 for Crypto Systems
 
-A small, auditable set of engineering rules for software handling cryptocurrency, keys, balances, transactions, and settlement.
+A small, auditable set of engineering rules for software handling cryptocurrency, keys, balances, transactions, and settlement. Intended for usage with modern agentic frameworks and LLMs.
 
 Inspired by Gerard J. Holzmann's [*The Power of Ten: Rules for Developing Safety-Critical Code*](https://en.wikipedia.org/wiki/The_Power_of_10:_Rules_for_Developing_Safety-Critical_Code).
 
